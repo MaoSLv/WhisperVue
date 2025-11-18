@@ -1,0 +1,78 @@
+# Editor and OS junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE metadata
+.idea/
+.vscode/
+*.iml
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Frontend (Vue / Node)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+dist/
+coverage/
+.nyc_output/
+
+# Backend (Python)
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.swo
+*.swp
+*.egg-info/
+.python-version
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+instance/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.envrc
+
+# Build artifacts
+build/
+dist/
+wheels/
+pip-wheel-metadata/
+htmlcov/
+site/
+*.manifest
+
+# Coverage
+.coverage
+.coverage.*
+coverage.xml
+.cache/
+
+# Uploads / user data
+media/
+uploads/
+
+# Misc
+*.bak
+*.tmp
+~$*
+
