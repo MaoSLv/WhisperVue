@@ -76,5 +76,5 @@ uploads/
 *.tmp
 ~$*
 
-model/*/
+model/**
 !model/*.py
