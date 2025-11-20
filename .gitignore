@@ -76,7 +76,4 @@ uploads/
 *.tmp
 ~$*
 
-model/**
-model/models--*
-model/models--Systran--*
-!model/*.py
+model/
