@@ -77,4 +77,5 @@ uploads/
 ~$*
 
 model/**
+model/models--Systran--*
 !model/*.py
