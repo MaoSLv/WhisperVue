@@ -1,0 +1,7 @@
+maxUploadSize: 512
+language: en
+model:
+  # base / small / medium / large-v2 / large-v3
+  size: base
+  # int8 / int8_float16 / float16 / bfloat16 / float32
+  compute_type: float16
