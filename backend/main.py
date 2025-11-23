@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api import upload, config
+from backend.api import upload, config
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
