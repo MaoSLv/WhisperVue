@@ -4,7 +4,7 @@
       <el-card class="upload-card" shadow="always">
         <div class="header">
           <h1 class="title">上传音频</h1>
-          <p class="subtitle">支持拖拽上传，格式 mp3 / wav / m4a / aac，最大 10 MB</p>
+          <p class="subtitle">支持拖拽上传，格式 mp3 / wav / m4a / aac / mp4 / mov / mkv 等，最大 10 MB</p>
         </div>
 
         <el-upload class="uploader" drag action="#" :auto-upload="false" :limit="1" :on-exceed="onExceed"
@@ -46,7 +46,7 @@ export default {
       // validate size (<=10MB)
       const isLt10M = file.size / 1024 / 1024 <= 10
       if (!isMedia) {
-        this.$message.error('请选择音频或视频文件（常见：mp3 / wav / m4a / aac / mp4 / webm 等）')
+        this.$message.error('请选择音频或视频文件')
         this.reset()
         return
       }
