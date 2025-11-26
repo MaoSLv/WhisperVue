@@ -1,5 +1,5 @@
 <template>
-  <div class="upload-container">
+  <div class="upload-container" v-loading="loading" element-loading-text="音频识别中，请稍等">
     <el-card class="upload-card" shadow="always">
         <div class="header">
           <h1 class="title">上传音频</h1>
@@ -14,8 +14,8 @@
         </el-upload>
 
         <div class="actions">
-          <el-button type="primary" @click="doUpload" :disabled="!fileList.length">开始处理</el-button>
-          <el-button @click="reset">重置</el-button>
+          <el-button type="primary" @click="doUpload" :disabled="!fileList.length" :loading="loading">开始处理</el-button>
+          <el-button @click="reset" :disabled="loading">重置</el-button>
         </div>
       </el-card>
   </div>
@@ -27,7 +27,8 @@ export default {
   data() {
     return {
       fileList: [],
-      acceptTypes: 'audio/*,video/*,.mp3,.wav,.m4a,.aac,.mp4,.webm,.mov,.mkv'
+      acceptTypes: 'audio/*,video/*,.mp3,.wav,.m4a,.aac,.mp4,.webm,.mov,.mkv',
+      loading: false
     }
   },
   methods: {
@@ -56,13 +57,42 @@ export default {
       this.fileList = latest
     },
     async doUpload() {
-      const rawFile = this.fileList[0].raw
-      const formData = new FormData()
-      formData.append('file', rawFile)  
-      await this.$axios.post('/upload/audio', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      this.$message.success('上传成功，正在处理音频')
+      if (!this.fileList.length) {
+        this.$message.warning('请先选择文件')
+        return
+      }
+      
+      this.loading = true
+      try {
+        const rawFile = this.fileList[0].raw
+        const formData = new FormData()
+        formData.append('file', rawFile)
+        
+        // 创建本地音频URL用于播放
+        const audioUrl = URL.createObjectURL(rawFile)
+        
+        const response = await this.$axios.post('/upload/audio', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        this.$message.success('上传成功')
+        
+        // 将数据存储到 sessionStorage，然后跳转到 Edit 页面
+        // 后端返回格式: { segments: [...], info: {...} }
+        const resultData = {
+          segments: response.data.segments || [],
+          info: response.data.info || {},
+          audioUrl: audioUrl // 使用本地创建的URL
+        }
+        sessionStorage.setItem('audioResult', JSON.stringify(resultData))
+        
+        // 跳转到 Edit 页面
+        this.$router.push({ name: 'Edit' })
+      } catch (error) {
+        this.$message.error('上传失败，请重试')
+        console.error('Upload error:', error)
+      } finally {
+        this.loading = false
+      }
     },
     reset() {
       this.fileList = []
@@ -85,6 +115,7 @@ export default {
   height: 100%;
   padding: 20px;
   box-sizing: border-box;
+  position: relative;
 }
 
 .upload-card {

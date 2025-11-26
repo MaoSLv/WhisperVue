@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Upload from '@/views/Upload.vue'
 import History from '@/views/History.vue'
+import Edit from '@/views/Edit.vue'
 
 Vue.use(VueRouter)
 
@@ -15,6 +16,11 @@ const routes = [
     path: '/history',
     name: 'History',
     component: History
+  },
+  {
+    path: '/edit',
+    name: 'Edit',
+    component: Edit
   },
   {
     path: '/',
