@@ -103,12 +103,12 @@ body {
 }
 
 .sidebar-menu .el-menu-item:hover {
-  background-color: #e9ecef !important;
+  background-color: #EBEDEE !important;
 }
 
 .sidebar-menu .el-menu-item.is-active {
-  background-color: #e3f2fd !important;
-  color: #409EFF !important;
+  background-color: #E7E9E9 !important;
+  color: #000 !important;
 }
 
 .sidebar-menu .el-menu-item i {
