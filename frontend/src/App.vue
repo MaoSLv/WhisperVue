@@ -1,84 +1,53 @@
 <template>
   <div id="app">
-    <div class="page">
-      <el-card class="upload-card" shadow="always">
-        <div class="header">
-          <h1 class="title">上传音频</h1>
-          <p class="subtitle">支持拖拽上传，格式 mp3 / wav / m4a / aac / mp4 / mov / mkv 等，最大 10 MB</p>
+    <el-container style="height: 100vh;">
+      <el-aside width="240px" class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <img src="/static/favicon.ico" alt="WhisperVue Logo" class="logo-img">
+          </div>
+          <h1 class="app-title">WhisperVue</h1>
         </div>
-
-        <el-upload class="uploader" drag action="#" :auto-upload="false" :limit="1" :on-exceed="onExceed"
-          :on-change="onFileChange" :file-list="fileList" :accept="acceptTypes">
-          <i class="el-icon-upload"></i>
-          <div class="el-upload__text">将文件拖到此处，或<em>点击选择</em></div>
-          <div class="el-upload__tip" slot="tip">请选择音频文件，单次仅限 1 个</div>
-        </el-upload>
-
-        <div class="actions">
-          <el-button type="primary" @click="doUpload" :disabled="!fileList.length">开始处理</el-button>
-          <el-button @click="reset">重置</el-button>
-        </div>
-      </el-card>
-    </div>
+        <el-menu
+          :default-active="activeMenu"
+          router
+          class="sidebar-menu"
+          background-color="#f8f9fa"
+          text-color="#333"
+          active-text-color="#409EFF">
+          <el-menu-item index="/upload">
+            <i class="el-icon-upload2"></i>
+            <span slot="title">上传</span>
+          </el-menu-item>
+          <el-menu-item index="/history">
+            <i class="el-icon-time"></i>
+            <span slot="title">历史记录</span>
+          </el-menu-item>
+        </el-menu>
+      </el-aside>
+      <el-main class="main-content">
+        <router-view></router-view>
+      </el-main>
+    </el-container>
   </div>
 </template>
 
 <script>
 export default {
   name: 'App',
-  data() {
-    return {
-      fileList: [],
-      acceptTypes: 'audio/*,video/*,.mp3,.wav,.m4a,.aac,.mp4,.webm,.mov,.mkv'
-    }
-  },
-  methods: {
-    onExceed() {
-      this.$message.warning('仅允许上传 1 个文件，请先移除已选文件')
-    },
-    onFileChange(file, fileList) {
-      // keep only latest
-      const latest = fileList.slice(-1)
-      // validate type: audio or video
-      const isMedia =
-        /^(audio|video)\//.test(file.raw.type) ||
-        /\.(mp3|wav|m4a|aac|mp4|webm|mov|mkv)$/i.test(file.name)
-      // validate size (<=10MB)
-      const isLt10M = file.size / 1024 / 1024 <= 10
-      if (!isMedia) {
-        this.$message.error('请选择音频或视频文件')
-        this.reset()
-        return
-      }
-      if (!isLt10M) {
-        this.$message.error('文件大小不能超过 10 MB')
-        this.reset()
-        return
-      }
-      this.fileList = latest
-    },
-    async doUpload() {
-      const rawFile = this.fileList[0].raw
-      const formData = new FormData()
-      formData.append('file', rawFile)  
-      await this.$axios.post('/upload/audio', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      this.$message.success('上传成功，正在处理音频')
-    },
-    reset() {
-      this.fileList = []
-    }
-  },
-  beforeDestroy() {
-    if (this.audioUrl) {
-      URL.revokeObjectURL(this.audioUrl)
+  computed: {
+    activeMenu() {
+      return this.$route.path
     }
   }
 }
 </script>
 
 <style>
+body {
+  margin: 0;
+}
+
 #app {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -87,60 +56,74 @@ export default {
   background: #ffffff;
   min-height: 100vh;
 }
-
-.page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 16px;
+  
+.sidebar {
+  background-color: #f8f9fa;
+  border-right: 1px solid #e4e7ed;
+  overflow-y: auto;
 }
 
-.upload-card {
-  width: 680px;
-  max-width: 100%;
-  border-radius: 12px;
-  border: 1px solid #ebeef5;
-}
-
-.header {
+.sidebar-header {
+  padding: 20px;
   text-align: center;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.logo {
   margin-bottom: 12px;
 }
 
-.title {
-  margin: 0;
-  font-size: 22px;
+.logo-img {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto;
+  display: block;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+.app-title {
+  font-size: 20px;
   font-weight: 600;
   color: #1f2d3d;
+  margin: 0;
+  letter-spacing: -0.5px;
 }
 
-.subtitle {
-  margin: 6px 0 0 0;
-  font-size: 13px;
-  color: #909399;
+.sidebar-menu {
+  border-right: none;
+  padding: 10px 0;
 }
 
-.uploader {
-  margin-top: 20px;
-  max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
+.sidebar-menu .el-menu-item {
+  height: 48px;
+  line-height: 48px;
+  margin: 4px 12px;
+  border-radius: 8px;
 }
 
-.uploader .el-upload {
-  display: inline-block;
+.sidebar-menu .el-menu-item:hover {
+  background-color: #e9ecef !important;
 }
 
-.uploader .el-upload-dragger {
-  margin-left: auto;
-  margin-right: auto;
+.sidebar-menu .el-menu-item.is-active {
+  background-color: #e3f2fd !important;
+  color: #409EFF !important;
 }
 
-.actions {
-  margin-top: 16px;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+.sidebar-menu .el-menu-item i {
+  margin-right: 8px;
+  font-size: 18px;
 }
+
+.main-content {
+  background-color: #ffffff;
+  padding: 0;
+  overflow-y: auto;
+}
+
+body > .el-container {
+  margin-bottom: 40px;
+}
+
 </style>
