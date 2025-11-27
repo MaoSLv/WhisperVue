@@ -75,18 +75,19 @@ export default {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
         this.$message.success('上传成功')
+        console.log(response)
         
         // 将数据存储到 sessionStorage，然后跳转到 Edit 页面
         // 后端返回格式: { segments: [...], info: {...} }
-        const resultData = {
-          segments: response.data.segments || [],
-          info: response.data.info || {},
-          audioUrl: audioUrl // 使用本地创建的URL
-        }
-        sessionStorage.setItem('audioResult', JSON.stringify(resultData))
+        // const resultData = {
+        //   segments: response.data.segments || [],
+        //   info: response.data.info || {},
+        //   audioUrl: audioUrl // 使用本地创建的URL
+        // }
+        // sessionStorage.setItem('audioResult', JSON.stringify(resultData))
         
         // 跳转到 Edit 页面
-        this.$router.push({ name: 'Edit' })
+        // this.$router.push({ name: 'Edit' })
       } catch (error) {
         this.$message.error('上传失败，请重试')
         console.error('Upload error:', error)

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from backend.api import upload, config
 from fastapi.middleware.cors import CORSMiddleware
+import backend.db as db
 import uvicorn
 import os
 
@@ -18,6 +19,9 @@ app.include_router(upload.router)
 app.include_router(config.router)
 
 if __name__ == "__main__":
+    db.init_db()
+    print("数据库准备完毕")
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

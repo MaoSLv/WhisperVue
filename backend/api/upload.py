@@ -1,15 +1,18 @@
+import os
 import time
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from moviepy.editor import VideoFileClip
+
 from backend.model_manager import model
 from pathlib import Path
+import  backend.db as db
+import uuid
 import tempfile
-import os
-from moviepy.editor import VideoFileClip
 
 router = APIRouter(prefix="/upload", tags=["上传"])
 
-TMP_DIR = Path(__file__).parent.parent / "tmp"
+MEDIA_DIR = Path(__file__).parent.parent / "media"
 
 # 判断是否为视频文件
 def is_video_file(content_type: str) -> bool:
@@ -43,35 +46,37 @@ async def upload(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="文件名不能为空！")
     now = time.time()
     content_type = file.content_type
+    CHUNK_SIZE = 1048576
+
+
     if (is_video_file(content_type)):
         print("检测到视频文件，正在提取音频...")
-
-        # 1. 创建两个临时文件的名称，并立即关闭它们的句柄
-        temp_audio_name = None
         temp_video_name = None
-
         try:
-            # 创建临时视频文件
-            with tempfile.NamedTemporaryFile(delete=False, dir=TMP_DIR) as temp_video_file:
+            with tempfile.NamedTemporaryFile(delete=False, dir="./") as temp_video_file:
                 temp_video_name = temp_video_file.name
-                # 先保存视频到临时文件
-                video_bytes = await file.read()
-                temp_video_file.write(video_bytes)
-                # temp_video_file.flush() # flush不是必须的，with块退出时会自动处理
 
-            # 创建临时音频文件
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav", dir=TMP_DIR) as temp_audio_file:
-                temp_audio_name = temp_audio_file.name
-            # 此时 temp_audio_file 句柄已关闭 (文件存在，但没有内容)
+                # 异步读取上传文件并写入临时存储
+                while True:
+                    chunk = await file.read(CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    temp_video_file.write(chunk)
 
-            # 提取音频
+            unique_audio_filename = f"{uuid.uuid4()}.wav"
+            audio_path = MEDIA_DIR / unique_audio_filename
+
             with VideoFileClip(temp_video_name) as video:
-                # 写入音频内容到文件
-                video.audio.write_audiofile(temp_audio_name, logger=None)
+                # 写入音频内容到永久存储路径
+                video.audio.write_audiofile(
+                    str(audio_path),
+                    codec='pcm_s16le',
+                    logger=None
+                )
 
             # 使用提取的音频进行识别
             segments, info = model.transcribe(
-                temp_audio_name,
+                audio_path,
                 beam_size=5,
                 vad_filter=True,
                 language="zh"
@@ -80,7 +85,7 @@ async def upload(file: UploadFile = File(...)):
             transcribed_segments_list = list(segments)
 
             # 2. 构造一个可被 FastAPI 序列化为 JSON 的字典
-            result = {
+            data = {
                 # 遍历列表中的 Segment 对象，提取所需属性
                 "segments": [
                     {
@@ -96,21 +101,13 @@ async def upload(file: UploadFile = File(...)):
                     "duration_after_vad": info.duration_after_vad,
                 }
             }
-
-            print(result)
+            last_id = db.insert_task(file.filename, data['info']['duration'], audio_path.stat().st_size, str(audio_path), data['segments'])
             print(f"耗时: {time.time() - now} s")
-            return result  # 返回可序列化的字典对象
-            return segments
-            # model.transcribe 读取完成后，应该释放句柄
-
+            return last_id
+        except Exception as e:
+            print(e)
         finally:
-            # 3. 清理临时文件
-            if temp_video_name and os.path.exists(temp_video_name):
-                os.unlink(temp_video_name)
-            if temp_audio_name and os.path.exists(temp_audio_name):
-                # 添加一个小的延迟，给操作系统和moviepy/faster-whisper一个释放句柄的时间
-                # 但更好的方法是确保逻辑上句柄已释放
-                os.unlink(temp_audio_name)
+            os.unlink(temp_video_name)
     elif (is_audio_file(content_type)):
         return await file.read()
     else:
