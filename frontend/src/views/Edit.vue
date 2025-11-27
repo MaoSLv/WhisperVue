@@ -58,6 +58,19 @@
             </el-button>
           </template>
         </el-table-column>
+
+        <el-table-column label="操作" width="120" align="center">
+          <template slot-scope="scope">
+            <el-button
+              type="danger"
+              size="small"
+              icon="el-icon-delete"
+              @click="deleteSegment(scope.$index)"
+              circle
+            >
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </div>
   </div>
@@ -157,6 +170,11 @@ export default {
       if (seconds >= 0) {
         this.segments[index].end = seconds
         this.segments[index].endFormatted = formatSeconds(seconds)
+      }
+    },
+    deleteSegment(index) {
+      if (index >= 0 && index < this.segments.length) {
+        this.segments.splice(index, 1)
       }
     },
     playAudio(row) {
