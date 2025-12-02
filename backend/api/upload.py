@@ -20,7 +20,7 @@ MEDIA_DIR = Path(__file__).parent.parent / "media"
 
 backend_dir = Path(__file__).parent.parent
 config_file = backend_dir / "settings.yaml"
-MAX_UPLOAD_SIZE_MB = yaml.safe_load(config_file.read_text(encoding="utf-8"))['maxUploadSize']
+CONFIG = yaml.safe_load(config_file.read_text(encoding="utf-8"))
 
 # 确保 MEDIA_DIR 存在
 if not MEDIA_DIR.exists():
@@ -104,6 +104,7 @@ async def _process_and_save_audio(
             data['info']['duration'],
             audio_path.stat().st_size,  # 获取文件大小
             str(audio_path),
+            f"{CONFIG['model']['size']}/{CONFIG['model']['compute_type']}",
             data['segments']
         )
         print(f"耗时: {time.time() - start_time} s")
@@ -122,7 +123,7 @@ async def upload(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="文件名不能为空！")
 
-    MAX_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+    MAX_SIZE_BYTES = CONFIG['maxUploadSize'] * 1024 * 1024
 
     file.file.seek(0, 2)  # 移动到文件末尾
     file_size = file.file.tell()  # 获取当前位置，即文件大小
