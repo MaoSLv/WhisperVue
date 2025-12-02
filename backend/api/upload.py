@@ -11,12 +11,16 @@ import uuid
 import tempfile
 import shutil
 from opencc import OpenCC
+import yaml
 
 router = APIRouter(prefix="/upload", tags=["上传"])
 
 # 定义媒体文件存储目录
 MEDIA_DIR = Path(__file__).parent.parent / "media"
-CHUNK_SIZE = 1048576  # 提取为常量
+
+backend_dir = Path(__file__).parent.parent
+config_file = backend_dir / "settings.yaml"
+MAX_UPLOAD_SIZE_MB = yaml.safe_load(config_file.read_text(encoding="utf-8"))['maxUploadSize']
 
 # 确保 MEDIA_DIR 存在
 if not MEDIA_DIR.exists():
@@ -116,6 +120,15 @@ async def upload(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="文件名不能为空！")
 
+    MAX_SIZE_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024
+
+    file.file.seek(0, 2)  # 移动到文件末尾
+    file_size = file.file.tell()  # 获取当前位置，即文件大小
+
+    if file_size > MAX_SIZE_BYTES:
+        raise HTTPException(status_code=413, detail="文件大小超出服务器限制。")
+
+    file.file.seek(0)  # 重置指针
     now = time.time()
     content_type = file.content_type
 
