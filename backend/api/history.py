@@ -45,3 +45,11 @@ async def list(page: int = 1, page_size: int = 10):
         "total_pages": total_pages,
         "data": data_list
     }
+
+@router.get("/detail/{id}")
+async def detail(id: int):
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    count_sql = f"""SELECT id, uuid_filename, original_segments_json FROM segments WHERE id = ?"""
+    cursor.execute(count_sql, (id,))
+    return cursor.fetchone()

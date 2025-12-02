@@ -8,9 +8,16 @@
         :show-header="true" 
         stripe
       >
-        <el-table-column type="index" label="#" width="60" align="center" class-name="index-column"></el-table-column>
+        <el-table-column
+          type="index"
+          label="#"
+          width="60"
+          align="center"
+          header-align="center"
+          class-name="index-column"
+        ></el-table-column>
         
-        <el-table-column label="开始时间" width="140">
+        <el-table-column label="开始时间" width="140" header-align="center">
           <template slot-scope="scope">
             <el-input 
               v-model="scope.row.startFormatted" 
@@ -22,7 +29,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="结束时间" width="140">
+        <el-table-column label="结束时间" width="140" header-align="center">
           <template slot-scope="scope">
             <el-input 
               v-model="scope.row.endFormatted" 
@@ -34,7 +41,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="字幕内容">
+        <el-table-column label="字幕内容" header-align="center">
           <template slot-scope="scope">
             <el-input 
               type="textarea"
@@ -45,7 +52,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="音频试听" width="120" align="center">
+        <el-table-column label="音频试听" width="120" align="center" header-align="center">
           <template slot-scope="scope">
             <el-button 
               @click="playAudio(scope.row)" 
@@ -59,7 +66,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="120" align="center">
+        <el-table-column label="操作" width="120" align="center" header-align="center">
           <template slot-scope="scope">
             <el-button
               type="danger"
@@ -112,50 +119,59 @@ export default {
     }
   },
   mounted() {
-    // 从 sessionStorage 获取数据
-    const storedData = sessionStorage.getItem('audioResult')
-    if (storedData) {
-      try {
-        const resultData = JSON.parse(storedData)
-        
-        // 处理 segments 数据
-        if (resultData.segments && Array.isArray(resultData.segments)) {
-          this.segments = resultData.segments.map(s => ({
+    const id = this.$route.query.id
+    if (!id) {
+      this.$message.error('缺少历史记录 ID')
+      return
+    }
+
+    this.$axios
+      .get(`/history/detail/${id}`)
+      .then(response => {
+        const record = response.data || {}
+
+        // 处理音频 URL（从服务端获取）
+        if (record.uuid_filename) {
+          this.audioUrl = `http://localhost:8000/media/${record.uuid_filename}`
+        } else {
+          console.warn('未找到音频文件名 uuid_filename')
+        }
+
+        // 处理 segments 数据（original_segments_json 为字符串化的 JSON）
+        let segmentsRaw = []
+        if (record.original_segments_json) {
+          try {
+            segmentsRaw = JSON.parse(record.original_segments_json)
+          } catch (e) {
+            console.error('解析 original_segments_json 失败:', e)
+            this.$message.error('字幕数据解析失败')
+          }
+        }
+
+        if (Array.isArray(segmentsRaw) && segmentsRaw.length > 0) {
+          this.segments = segmentsRaw.map(s => ({
             ...s,
             // 清理文本中的多余换行符和空白字符，但保留必要的空格
-            text: (s.text || '').replace(/\r\n/g, ' ').replace(/\n/g, ' ').replace(/\r/g, ' ').replace(/\s+/g, ' ').trim(),
+            text: (s.text || '')
+              .replace(/\r\n/g, ' ')
+              .replace(/\n/g, ' ')
+              .replace(/\r/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim(),
             startFormatted: formatSeconds(s.start),
             endFormatted: formatSeconds(s.end)
           }))
           this.$nextTick(() => {
-            this.autosizeConfig = { minRows: 1, maxRows: 5 };
-          });
+            this.autosizeConfig = { minRows: 1, maxRows: 5 }
+          })
         } else {
           this.$message.warning('未找到字幕数据')
         }
-        
-        // 处理 info 数据
-        if (resultData.info) {
-          this.info = resultData.info
-        }
-        
-        // 处理音频URL
-        if (resultData.audioUrl) {
-          this.audioUrl = resultData.audioUrl
-        } else {
-          console.warn('未找到音频文件URL')
-        }
-        
-        // 清除已使用的数据
-        sessionStorage.removeItem('audioResult')
-      } catch (error) {
-        console.error('解析数据失败:', error)
-        this.$message.error('数据加载失败')
-      }
-    } else {
-      // 如果没有数据，显示提示
-      this.$message.warning('没有找到识别结果数据')
-    }
+      })
+      .catch(error => {
+        console.error('获取数据失败:', error)
+        this.$message.error('获取数据失败')
+      })
   },
   methods: {
     updateStartTime(index, timeStr) {
