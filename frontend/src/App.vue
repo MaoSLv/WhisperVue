@@ -35,10 +35,19 @@
 <script>
 export default {
   name: 'App',
+  methods: {
+    async loadConfig() {
+        const response = await this.$axios.get('/config/settings')
+        localStorage.setItem('MAX_UPLOAD_SIZE_MB', response.data)
+    }
+  },
   computed: {
     activeMenu() {
       return this.$route.path
     }
+  },
+  mounted() {
+    this.loadConfig()
   }
 }
 </script>

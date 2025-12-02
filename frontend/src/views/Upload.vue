@@ -42,17 +42,18 @@ export default {
       const isMedia =
         /^(audio|video)\//.test(file.raw.type) ||
         /\.(mp3|wav|m4a|aac|mp4|webm|mov|mkv)$/i.test(file.name)
-      // validate size (<=10MB)
-      const isLt10M = file.size / 1024 / 1024 <= 10
+      const MAX_SIZE_MB = localStorage.getItem('MAX_UPLOAD_SIZE_MB') || 10;
+      const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024
+
       if (!isMedia) {
         this.$message.error('请选择音频或视频文件')
         this.reset()
         return
       }
-      if (!isLt10M) {
-        this.$message.error('文件大小不能超过 10 MB')
-        this.reset()
-        return
+      if (file.size > MAX_SIZE_BYTES) {
+        this.$message.error(`文件大小不能超过 ${MAX_SIZE_MB} MB`);
+        this.reset();
+        return;
       }
       this.fileList = latest
     },
@@ -78,16 +79,15 @@ export default {
         console.log(response)
         
         // 将数据存储到 sessionStorage，然后跳转到 Edit 页面
-        // 后端返回格式: { segments: [...], info: {...} }
-        // const resultData = {
-        //   segments: response.data.segments || [],
-        //   info: response.data.info || {},
-        //   audioUrl: audioUrl // 使用本地创建的URL
-        // }
-        // sessionStorage.setItem('audioResult', JSON.stringify(resultData))
+        const resultData = {
+          segments: response.data.segments || [],
+          info: response.data.info || {},
+          audioUrl: audioUrl // 使用本地创建的URL
+        }
+        sessionStorage.setItem('audioResult', JSON.stringify(resultData))
         
         // 跳转到 Edit 页面
-        // this.$router.push({ name: 'Edit' })
+        this.$router.push({ name: 'Edit' })
       } catch (error) {
         this.$message.error('上传失败，请重试')
         console.error('Upload error:', error)
