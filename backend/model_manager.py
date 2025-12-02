@@ -9,6 +9,7 @@ import shutil
 from pathlib import Path
 import yaml
 from faster_whisper import WhisperModel
+import time
 
 BACKEND_DIR = Path(__file__).parent
 CONFIG_FILE = BACKEND_DIR / "settings.yaml"
@@ -45,6 +46,8 @@ def ensure_model_exists(model_dir: Path, hf_model_id: str, quantization: str):
     feature_extractor.save_pretrained(model_dir)
 
     print(f"✅ 模型转换完成: {model_dir}")
+    print("等待 1 秒以确保缓存文件句柄被释放...")
+    time.sleep(1)
     shutil.rmtree("./cache")
 
 
