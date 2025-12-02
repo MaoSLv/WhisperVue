@@ -12,6 +12,8 @@ SCHEMA_SQL: Iterable[str] = [
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
         -- 原文件名
         original_filename TEXT NOT NULL, 
+        -- uuid文件名
+        uuid_filename TEXT NOT NULL,
         -- 文件时长
         duration REAL, 
         -- 文件大小
@@ -45,19 +47,19 @@ def init_db() -> None:
         conn.close()
 
 
-def insert_task(filename: str, duration: float, file_size_bytes: int, media_path:str, segments: list) -> int:
+def insert_task(filename: str, unique_audio_filename:str, duration: float, file_size_bytes: int, media_path:str, segments: list) -> int:
     conn = get_connection()
     original_segments_json = json.dumps(segments, ensure_ascii=False)
 
     sql = """
-          INSERT INTO segments (original_filename, duration, file_size_bytes, media_path, original_segments_json)
-          VALUES (?, ?, ?, ?, ?); \
+          INSERT INTO segments (original_filename, uuid_filename, duration, file_size_bytes, media_path, original_segments_json)
+          VALUES (?, ?, ?, ?, ?, ?); \
           """
     try:
         with conn:
             cursor = conn.execute(
                 sql,
-                (filename, duration, file_size_bytes, media_path, original_segments_json)
+                (filename, unique_audio_filename, duration, file_size_bytes, media_path, original_segments_json)
             )
             # 获取刚刚插入的行的ID (SQLite特性)
             return cursor.lastrowid

@@ -59,6 +59,7 @@ def is_audio_file(content_type: str) -> bool:
 
 async def _process_and_save_audio(
         filename: str,
+        unique_audio_filename: str,
         audio_path: Path,
         start_time: float
 ):
@@ -99,6 +100,7 @@ async def _process_and_save_audio(
         # 3. 存储到数据库
         last_id = db.insert_task(
             filename,
+            unique_audio_filename,
             data['info']['duration'],
             audio_path.stat().st_size,  # 获取文件大小
             str(audio_path),
@@ -157,7 +159,7 @@ async def upload(file: UploadFile = File(...)):
                 )
 
             # 3. 调用通用处理函数
-            return await _process_and_save_audio(file.filename, audio_path, now)
+            return await _process_and_save_audio(file.filename, unique_audio_filename,audio_path, now)
 
         except Exception as e:
             # 捕获所有异常并打印
