@@ -19,12 +19,16 @@ SCHEMA_SQL: Iterable[str] = [
         -- 文件大小
         file_size_bytes INTEGER,
         media_path TEXT NOT NULL,
+        -- 模型精度
+        model_config TEXT NOT NULL,
         -- 更新时间
         upload_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, 
         -- AI解析出来的字幕
         original_segments_json TEXT NOT NULL, 
         -- 用户编辑的字幕
-        edited_segments_json TEXT
+        edited_segments_json TEXT,
+        -- 是否编辑
+        is_edited INTEGER NOT NULL DEFAULT 0
         )
     """,
 ]
@@ -47,19 +51,19 @@ def init_db() -> None:
         conn.close()
 
 
-def insert_task(filename: str, unique_audio_filename:str, duration: float, file_size_bytes: int, media_path:str, segments: list) -> int:
+def insert_task(filename: str, unique_audio_filename:str, duration: float, file_size_bytes: int, media_path: str, model_config: str, segments: list) -> int:
     conn = get_connection()
     original_segments_json = json.dumps(segments, ensure_ascii=False)
 
     sql = """
-          INSERT INTO segments (original_filename, uuid_filename, duration, file_size_bytes, media_path, original_segments_json)
-          VALUES (?, ?, ?, ?, ?, ?); \
+          INSERT INTO segments (original_filename, uuid_filename, duration, file_size_bytes, media_path, model_config, original_segments_json)
+          VALUES (?, ?, ?, ?, ?, ?, ?); \
           """
     try:
         with conn:
             cursor = conn.execute(
                 sql,
-                (filename, unique_audio_filename, duration, file_size_bytes, media_path, original_segments_json)
+                (filename, unique_audio_filename, duration, file_size_bytes, media_path, model_config, original_segments_json)
             )
             # 获取刚刚插入的行的ID (SQLite特性)
             return cursor.lastrowid
